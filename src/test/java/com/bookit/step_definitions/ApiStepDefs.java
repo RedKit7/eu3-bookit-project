@@ -21,11 +21,16 @@ public class ApiStepDefs {
     String token;
     Response response;
     String emailGlobal;
+
     @Given("I logged Bookit api using {string} and {string}")
     public void i_logged_Bookit_api_using_and(String email, String password) {
 
        token = BookItApiUtils.generateToken(email,password);
         emailGlobal = email;
+
+
+
+
 
     }
 
@@ -34,11 +39,11 @@ public class ApiStepDefs {
         //send get request to retrieve current user information
         String url = ConfigurationReader.get("qa2api.uri")+"/api/users/me";
 
-       response=     given().accept(ContentType.JSON)
+                            response =given().accept(ContentType.JSON)
                                      .and()
                                      .header("Authorization",token)
                                .when()
-                                       .get(url);
+                                      .get(url);
 
 
     }
@@ -52,18 +57,27 @@ public class ApiStepDefs {
 
     @Then("the information about current user from api and database should match")
     public void the_information_about_current_user_from_api_and_database_should_match() {
+
         //API -DB
         //get information from database
+
         String query = "select id,firstname,lastname,role\n" +
                 "from users\n" +
                 "where email ='"+emailGlobal+"';";
 
         Map<String, Object> rowMap = DBUtils.getRowMap(query);
         System.out.println("rowMap = " + rowMap);
+
         long expectedId = (long) rowMap.get("id");
         String expectedFirstName = (String) rowMap.get("firstname");
         String expectedLastName = (String) rowMap.get("lastname");
         String expectedRole = (String) rowMap.get("role");
+
+
+        System.out.println("rowMap.get(\"id\") = " + rowMap.get("id"));
+        System.out.println("rowMap.get(\"firstname\") = " + rowMap.get("firstname"));
+        System.out.println("rowMap.get(\"lastname\") = " + rowMap.get("lastname"));
+        System.out.println("rowMap.get(\"role\") = " + rowMap.get("role"));
 
         //get information from api
         JsonPath jsonPath = response.jsonPath();
@@ -73,6 +87,8 @@ public class ApiStepDefs {
         String actualLastName = jsonPath.getString("lastName");
         String actualRole = jsonPath.getString("role");
 
+
+
         //compare API - DB
         Assert.assertEquals(expectedId,actualId);
         Assert.assertEquals(expectedFirstName,actualFirstName);
@@ -80,9 +96,13 @@ public class ApiStepDefs {
         Assert.assertEquals(expectedRole,actualRole);
 
 
-
+        // save api response inside the map  (de-serialization)
+        Map<String,Object> apiMap = response.as(Map.class);
+        System.out.println("apiMap = " + apiMap);
 
     }
+
+
 
     @Then("UI,API and Database user information must be match")
     public void ui_API_and_Database_user_information_must_be_match() {
